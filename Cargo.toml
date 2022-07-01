@@ -2,6 +2,11 @@
 name = "winky"
 version = "0.1.0"
 edition = "2021"
+description = "A windows+tokio keyboard event emitter and listener module"
+readme = "Readme.md"
+homepage = "https://github.com/glenmurphy/winky/"
+repository = "https://github.com/glenmurphy/winky/"
+license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
