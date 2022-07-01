@@ -14,8 +14,11 @@ fn main() {
 
   let mut key_rx = winky::listen();
   loop {
-    let key = key_rx.recv().unwrap();
-    println!("{:?}", key);
+    let (code, down) = key_rx.recv().unwrap();
+    println!("{:?}", code);
+    if key == Key::Q as u32 && down {
+      return;
+    }
   }
 }
 ```
