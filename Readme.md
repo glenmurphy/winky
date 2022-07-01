@@ -5,18 +5,26 @@ Rust module for using the keyboard on Windows:
 - Channel+thread based listener for keyboard events, allowing for hotkeys
 
 # usage
+Cargo.toml:
+```
+[dependencies]
+winky = { git = "https://github.com/glenmurphy/winky/" }
+```
+
+main.rs:
 ```
 use winky::{self, Key};
 
-fn main() {
+#[tokio::main]
+async fn main() {
   winky::press(Key::A);
   winky::release(Key::A);
 
   let mut key_rx = winky::listen();
   loop {
-    let (code, down) = key_rx.recv().unwrap();
+    let (code, down) = key_rx.recv().await.unwrap();
     println!("{:?}", code);
-    if key == Key::Q as u32 && down {
+    if code == Key::Q as u32 && down {
       return;
     }
   }
