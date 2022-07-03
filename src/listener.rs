@@ -7,8 +7,9 @@ use winapi::um::libloaderapi::GetModuleHandleW;
 use std::ptr;
 use std::sync::Mutex;
 use crate::Key;
+use tokio::sync::mpsc::UnboundedSender;
 
-static mut RESULT_SENDER: Option<Mutex<tokio::sync::mpsc::UnboundedSender<(Key, bool)>>> = None;
+static mut RESULT_SENDER: Option<Mutex<UnboundedSender<(Key, bool)>>> = None;
 
 #[macro_export]
 /// Convert regular expression to a native string, to be passable as an argument in WinAPI
@@ -187,7 +188,7 @@ fn message_loop(hwnd: HWND) {
     }
 }
 
-pub fn run_hook(tx: tokio::sync::mpsc::UnboundedSender<(crate::Key, bool)>) {
+pub fn run_hook(tx: UnboundedSender<(Key, bool)>) {
     unsafe {
         RESULT_SENDER = Some(Mutex::new(tx));
     }
