@@ -181,7 +181,7 @@ fn message_loop(hwnd: HWND) {
         pt : POINT { x: 0, y: 0, },
     };
     unsafe {
-        while 1 == GetMessageW(&mut msg, hwnd as HWND, WM_INPUT, WM_INPUT) {
+        while GetMessageW(&mut msg, hwnd as HWND, WM_INPUT, WM_INPUT) == 1 {
             DispatchMessageW(&msg);
         }
         CloseWindow(hwnd);

@@ -178,17 +178,18 @@ pub enum Button {
     None,
     Left,
     Right,
-    Middle
+    Middle,
+    X1,
+    X2
 }
 
 fn send_key(key: Key, down: bool) -> Result<(), Error> {
     let mut input_u: INPUT_u = unsafe { std::mem::zeroed() };
 
-    let mut flags = if down {
-        KEYEVENTF_SCANCODE
-    } else {
-        KEYEVENTF_KEYUP | KEYEVENTF_SCANCODE
-    };
+    let mut flags = KEYEVENTF_SCANCODE;
+    if !down { 
+        flags |= KEYEVENTF_KEYUP
+    }
     if key as u32 > 0xFF {
         flags |= KEYEVENTF_EXTENDEDKEY;
     }
