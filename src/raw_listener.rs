@@ -145,7 +145,7 @@ unsafe extern "system" fn wnd_proc(
                             tx.send((raw_keyboard_input.MakeCode as u32, true)).unwrap();
                         }
                         RI_KEY_BREAK => {
-                            tx.send((raw_keyboard_input.MakeCode as u32, true)).unwrap();
+                            tx.send((raw_keyboard_input.MakeCode as u32, false)).unwrap();
                         }
                         _ => {}
                     }
