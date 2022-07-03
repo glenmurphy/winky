@@ -3,10 +3,11 @@
 // scancodes
 use std::{io::Error};
 use winapi::um::winuser::*;
+use num_derive::FromPrimitive;    
 mod listener;
 
 // keyboard scan codes from http://www.quadibloc.com/comp/scan.htm
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug, FromPrimitive)]
 #[allow(unused)]
 pub enum Key {
     Esc = 0x01,
@@ -268,7 +269,7 @@ pub fn button_release(button: Button) {
     send_mouse(0, 0, button, false).unwrap();
 }
 
-pub fn listen() -> tokio::sync::mpsc::UnboundedReceiver<(u32, bool)> {
+pub fn listen() -> tokio::sync::mpsc::UnboundedReceiver<(crate::Key, bool)> {
     let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
     listener::run_hook(tx);
     rx

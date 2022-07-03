@@ -6,8 +6,9 @@ use winapi::{
 use winapi::um::libloaderapi::GetModuleHandleW;
 use std::ptr;
 use std::sync::Mutex;
+use crate::Key;
 
-static mut RESULT_SENDER: Option<Mutex<tokio::sync::mpsc::UnboundedSender<(u32, bool)>>> = None;
+static mut RESULT_SENDER: Option<Mutex<tokio::sync::mpsc::UnboundedSender<(Key, bool)>>> = None;
 
 #[macro_export]
 /// Convert regular expression to a native string, to be passable as an argument in WinAPI
@@ -118,6 +119,27 @@ fn get_devices() {
     }
 }
 
+fn handle_key(raw_input: &RAWINPUT) {
+    unsafe { 
+        let tx = RESULT_SENDER.as_ref().unwrap().lock().unwrap();
+        let raw_keyboard_input = raw_input.data.keyboard();
+
+        match raw_keyboard_input.Flags as u32 {
+            RI_KEY_MAKE | RI_KEY_BREAK => {
+                let down = raw_keyboard_input.Flags == RI_KEY_MAKE as u16;
+                match num::FromPrimitive::from_u32(raw_keyboard_input.MakeCode as u32) {
+                    Some(code) => tx.send((code, down)).unwrap(),
+                    None => { println!("Unknown code: {}", raw_keyboard_input.MakeCode); }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn handle_mouse(_raw_input: &RAWINPUT) {
+}
+
 unsafe extern "system" fn wnd_proc(
     hwnd: HWND,
     msg: u32,
@@ -137,24 +159,9 @@ unsafe extern "system" fn wnd_proc(
                std::mem::size_of::<RAWINPUTHEADER>() as u32
             );
 
-            let tx = RESULT_SENDER.as_ref().unwrap().lock().unwrap();
             match raw_input.header.dwType {
-                RIM_TYPEKEYBOARD => {
-                    let raw_keyboard_input = raw_input.data.keyboard();
-                    match raw_keyboard_input.Flags as u32 {
-                        RI_KEY_MAKE => {
-                            tx.send((raw_keyboard_input.MakeCode as u32, true)).unwrap();
-                        }
-                        RI_KEY_BREAK => {
-                            tx.send((raw_keyboard_input.MakeCode as u32, false)).unwrap();
-                        }
-                        _ => {}
-                    }
-                }
-                RIM_TYPEMOUSE => {
-                    // let raw_mouse_input = raw_input.data.mouse();
-                    // raw_mouse_input.usButtonFlags
-                }
+                RIM_TYPEKEYBOARD => handle_key(&raw_input),
+                RIM_TYPEMOUSE => handle_mouse(&raw_input),
                 _ => {}
             }
             0
@@ -180,7 +187,7 @@ fn message_loop(hwnd: HWND) {
     }
 }
 
-pub fn run_hook(tx: tokio::sync::mpsc::UnboundedSender<(u32, bool)>) {
+pub fn run_hook(tx: tokio::sync::mpsc::UnboundedSender<(crate::Key, bool)>) {
     unsafe {
         RESULT_SENDER = Some(Mutex::new(tx));
     }
