@@ -4,7 +4,6 @@
 use std::{io::Error};
 use winapi::um::winuser::*;
 mod listener;
-pub mod raw_listener;
 
 // keyboard scan codes from http://www.quadibloc.com/comp/scan.htm
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -272,11 +271,5 @@ pub fn button_release(button: Button) {
 pub fn listen() -> tokio::sync::mpsc::UnboundedReceiver<(u32, bool)> {
     let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
     listener::run_hook(tx);
-    rx
-}
-
-pub fn raw_listen() -> tokio::sync::mpsc::UnboundedReceiver<(u32, bool)> {
-    let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
-    raw_listener::run_hook(tx);
     rx
 }
