@@ -6,13 +6,13 @@ Rust module for using the keyboard on Windows:
 
 # usage
 Cargo.toml:
-```
+```cargo
 [dependencies]
 winky = { git = "https://github.com/glenmurphy/winky/" }
 ```
 
 main.rs:
-```
+```rust
 use winky::{self, Key};
 
 #[tokio::main]
@@ -30,3 +30,7 @@ async fn main() {
   }
 }
 ```
+
+# examples
+
+`cargo run --example listener`
