@@ -1,17 +1,18 @@
-# winky
+# Winky
 Rust module for using the keyboard on Windows:
 - Emits keyboard events using scan codes rather than VK codes (required for some games)
 - Emits mouse events
 - Channel+thread based listener for keyboard events, allowing for hotkeys
 
-# usage
-Cargo.toml:
-```cargo
+
+# Usage
+`Cargo.toml:`
+```toml
 [dependencies]
 winky = { git = "https://github.com/glenmurphy/winky/" }
 ```
 
-main.rs:
+`main.rs:`
 ```rust
 use winky::{self, Key};
 
