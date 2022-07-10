@@ -98,6 +98,7 @@ pub enum Key {
     Down = 0xE050,
     // Edit keys
     PrintScreen = 0x0E37,
+    SysRq = 0x54,
     ScrollLock = 0x46,
     Pause = 0x0E45,
     Insert = 0x0E52,
