@@ -181,7 +181,16 @@ pub enum Button {
     Right,
     Middle,
     X1,
-    X2
+    X2,
+    WheelUp,
+    WheelDown,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[allow(unused)]
+pub enum Event {
+    MouseButton(Button, bool),
+    Keyboard(Key, bool),
 }
 
 fn send_key(key: Key, down: bool) -> Result<(), Error> {
@@ -215,14 +224,23 @@ fn send_key(key: Key, down: bool) -> Result<(), Error> {
     };
     Ok(())
 }
-
+ n n n n n n n n n n n n n n n n
 fn send_mouse(x: i32, y: i32, button: Button, down: bool) -> Result<(), Error> {
     let mut input_u: INPUT_u = unsafe { std::mem::zeroed() };
 
+    let mut mouse_data: i16 = 0;
     let mut flags = match button {
         Button::Left => if down { MOUSEEVENTF_LEFTDOWN } else { MOUSEEVENTF_LEFTUP },
         Button::Right => if down { MOUSEEVENTF_RIGHTDOWN } else { MOUSEEVENTF_RIGHTUP },
         Button::Middle => if down { MOUSEEVENTF_MIDDLEDOWN } else { MOUSEEVENTF_MIDDLEUP },
+        Button::WheelUp => { 
+            mouse_data = WHEEL_DELTA;
+            MOUSEEVENTF_WHEEL
+        },
+        Button::WheelDown => { 
+            mouse_data = -WHEEL_DELTA;
+            MOUSEEVENTF_WHEEL
+        },
         _ => 0
     };
     if x != 0 || y != 0 {
@@ -233,7 +251,7 @@ fn send_mouse(x: i32, y: i32, button: Button, down: bool) -> Result<(), Error> {
         *input_u.mi_mut() = MOUSEINPUT {
             dx: x as winapi::shared::ntdef::LONG,
             dy: y as winapi::shared::ntdef::LONG,
-            mouseData: 0,
+            mouseData: mouse_data as u32,
             dwFlags: flags,
             time: 0,
             dwExtraInfo: 0,
@@ -271,7 +289,7 @@ pub fn button_release(button: Button) {
     send_mouse(0, 0, button, false).unwrap();
 }
 
-pub fn listen() -> tokio::sync::mpsc::UnboundedReceiver<(crate::Key, bool)> {
+pub fn listen() -> tokio::sync::mpsc::UnboundedReceiver<crate::Event> {
     let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
     listener::run_hook(tx);
     rx
