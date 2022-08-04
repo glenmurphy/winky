@@ -224,7 +224,7 @@ fn send_key(key: Key, down: bool) -> Result<(), Error> {
     };
     Ok(())
 }
- n n n n n n n n n n n n n n n n
+
 fn send_mouse(x: i32, y: i32, button: Button, down: bool) -> Result<(), Error> {
     let mut input_u: INPUT_u = unsafe { std::mem::zeroed() };
 
