@@ -6,10 +6,10 @@ use winapi::{
 use winapi::um::libloaderapi::GetModuleHandleW;
 use std::ptr;
 use std::sync::Mutex;
-use crate::Key;
+use crate::{Event, Button};
 use tokio::sync::mpsc::UnboundedSender;
 
-static mut RESULT_SENDER: Option<Mutex<UnboundedSender<(Key, bool)>>> = None;
+static mut RESULT_SENDER: Option<Mutex<UnboundedSender<Event>>> = None;
 
 #[macro_export]
 /// Convert regular expression to a native string, to be passable as an argument in WinAPI
@@ -129,7 +129,7 @@ fn handle_key(raw_input: &RAWINPUT) {
             RI_KEY_MAKE | RI_KEY_BREAK => {
                 let down = raw_keyboard_input.Flags == RI_KEY_MAKE as u16;
                 match num::FromPrimitive::from_u32(raw_keyboard_input.MakeCode as u32) {
-                    Some(code) => tx.send((code, down)).unwrap(),
+                    Some(code) => tx.send(Event::Keyboard(code, down)).unwrap(),
                     None => { println!("Unknown code: {}", raw_keyboard_input.MakeCode); }
                 }
             }
@@ -138,7 +138,32 @@ fn handle_key(raw_input: &RAWINPUT) {
     }
 }
 
-fn handle_mouse(_raw_input: &RAWINPUT) {
+fn handle_mouse(raw_input: &RAWINPUT) {
+    unsafe { 
+        let tx = RESULT_SENDER.as_ref().unwrap().lock().unwrap();
+        let raw_mouse_input = raw_input.data.mouse();
+
+        match raw_mouse_input.usButtonFlags as u16 {
+            RI_MOUSE_LEFT_BUTTON_DOWN => tx.send(Event::MouseButton(Button::Left, true)).unwrap(),
+            RI_MOUSE_LEFT_BUTTON_UP => tx.send(Event::MouseButton(Button::Left, false)).unwrap(),
+            RI_MOUSE_RIGHT_BUTTON_DOWN => tx.send(Event::MouseButton(Button::Right, true)).unwrap(),
+            RI_MOUSE_RIGHT_BUTTON_UP => tx.send(Event::MouseButton(Button::Right, false)).unwrap(),
+            RI_MOUSE_MIDDLE_BUTTON_DOWN => tx.send(Event::MouseButton(Button::Middle, true)).unwrap(),
+            RI_MOUSE_MIDDLE_BUTTON_UP => tx.send(Event::MouseButton(Button::Middle, false)).unwrap(),
+            RI_MOUSE_BUTTON_4_DOWN => tx.send(Event::MouseButton(Button::X1, true)).unwrap(),
+            RI_MOUSE_BUTTON_4_UP => tx.send(Event::MouseButton(Button::X1, false)).unwrap(),
+            RI_MOUSE_BUTTON_5_DOWN => tx.send(Event::MouseButton(Button::X2, true)).unwrap(),
+            RI_MOUSE_BUTTON_5_UP => tx.send(Event::MouseButton(Button::X2, false)).unwrap(),
+            RI_MOUSE_WHEEL => {
+                if (raw_mouse_input.usButtonData as i16) > 0 {
+                    tx.send(Event::MouseButton(Button::WheelUp, true)).unwrap();
+                } else {
+                    tx.send(Event::MouseButton(Button::WheelDown, true)).unwrap();
+                }
+            }
+            _ => {  }
+        }
+    }
 }
 
 unsafe extern "system" fn wnd_proc(
@@ -188,7 +213,7 @@ fn message_loop(hwnd: HWND) {
     }
 }
 
-pub fn run_hook(tx: UnboundedSender<(Key, bool)>) {
+pub fn run_hook(tx: UnboundedSender<Event>) {
     unsafe {
         RESULT_SENDER = Some(Mutex::new(tx));
     }

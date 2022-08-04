@@ -14,19 +14,18 @@ winky = { git = "https://github.com/glenmurphy/winky/" }
 
 `main.rs:`
 ```rust
-use winky::{self, Key};
+use winky::{self, Event, Key};
 
 #[tokio::main]
 async fn main() {
   winky::press(Key::A);
   winky::release(Key::A);
 
-  let mut key_rx = winky::listen();
+  let mut rx = winky::listen();
   loop {
-    let (code, down) = key_rx.recv().await.unwrap();
-    println!("{:?}", code);
-    if code == Key::Q as u32 && down {
-      return;
+    match rx.recv().await.unwrap() {
+      Event::Keyboard(Key::F9, true) => { println!("F9 pressed"); },
+      _ => {}
     }
   }
 }
