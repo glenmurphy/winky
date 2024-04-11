@@ -85,7 +85,7 @@ fn get_device_name(device: RAWINPUTDEVICELIST) -> String {
     use std::os::windows::ffi::OsStringExt;
 
     unsafe {
-        let mut name: [u16; 1024] = std::mem::MaybeUninit::uninit().assume_init();;
+        let mut name: [u16; 1024] = [0; 1024];
         let mut name_size: u32 = 1024;
 
         let bytes = GetRawInputDeviceInfoW(device.hDevice, RIDI_DEVICENAME, name.as_mut_ptr() as LPVOID, &mut name_size);
@@ -103,7 +103,7 @@ fn get_device_name(device: RAWINPUTDEVICELIST) -> String {
 #[allow(unused)]
 fn get_devices() {
     unsafe {
-        let mut buffer: [RAWINPUTDEVICELIST; 1000] = std::mem::MaybeUninit::uninit().assume_init();
+        let mut buffer: [RAWINPUTDEVICELIST; 1000] = [Default::default(); 1000];
         let mut num_devices: u32 = 0;
         let device_list_size = std::mem::size_of::<RAWINPUTDEVICELIST>();
 
@@ -175,14 +175,14 @@ unsafe extern "system" fn wnd_proc(
     match msg {
         WM_INPUT => {
             let mut dwsize: u32 = std::mem::size_of::<RAWINPUT>() as u32;
-            let mut raw_input: RAWINPUT = std::mem::MaybeUninit::uninit().assume_init();
+            let mut raw_input: RAWINPUT = std::mem::zeroed();
 
             GetRawInputData(
                 l_param as *mut _,
                 RID_INPUT,
                 &mut raw_input as *mut _ as *mut winapi::ctypes::c_void,
                 &mut dwsize as *mut _,
-               std::mem::size_of::<RAWINPUTHEADER>() as u32
+                std::mem::size_of::<RAWINPUTHEADER>() as u32
             );
 
             match raw_input.header.dwType {
