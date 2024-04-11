@@ -100,10 +100,10 @@ fn get_device_name(device: RAWINPUTDEVICELIST) -> String {
     }    
 }
 
-#[allow(unused)]
+#[allow(unused)] 
 fn get_devices() {
     unsafe {
-        let mut buffer: [RAWINPUTDEVICELIST; 1000] = [Default::default(); 1000];
+        let mut buffer: [RAWINPUTDEVICELIST; 1000] = std::mem::zeroed();
         let mut num_devices: u32 = 0;
         let device_list_size = std::mem::size_of::<RAWINPUTDEVICELIST>();
 
