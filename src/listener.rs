@@ -8,8 +8,9 @@ use std::ptr;
 use std::sync::Mutex;
 use crate::{Event, Button};
 use tokio::sync::mpsc::UnboundedSender;
+use once_cell::sync::Lazy;
 
-static mut RESULT_SENDER: Option<Mutex<UnboundedSender<Event>>> = None;
+static RESULT_SENDER: Lazy<Mutex<Option<UnboundedSender<Event>>>> = Lazy::new(|| Mutex::new(None));
 
 #[macro_export]
 /// Convert regular expression to a native string, to be passable as an argument in WinAPI
@@ -121,10 +122,9 @@ fn get_devices() {
 }
 
 fn handle_key(raw_input: &RAWINPUT) {
-    unsafe { 
-        let tx = RESULT_SENDER.as_ref().unwrap().lock().unwrap();
-        let raw_keyboard_input = raw_input.data.keyboard();
-
+    let tx = RESULT_SENDER.lock().unwrap();
+    if let Some(tx) = tx.as_ref() {
+        let raw_keyboard_input = unsafe { raw_input.data.keyboard() };
         match raw_keyboard_input.Flags as u32 {
             RI_KEY_MAKE | RI_KEY_BREAK => {
                 let down = raw_keyboard_input.Flags == RI_KEY_MAKE as u16;
@@ -139,10 +139,9 @@ fn handle_key(raw_input: &RAWINPUT) {
 }
 
 fn handle_mouse(raw_input: &RAWINPUT) {
-    unsafe { 
-        let tx = RESULT_SENDER.as_ref().unwrap().lock().unwrap();
-        let raw_mouse_input = raw_input.data.mouse();
-
+    let tx = RESULT_SENDER.lock().unwrap();
+    if let Some(tx) = tx.as_ref() {
+        let raw_mouse_input = unsafe { raw_input.data.mouse() };
         match raw_mouse_input.usButtonFlags as u16 {
             RI_MOUSE_LEFT_BUTTON_DOWN => tx.send(Event::MouseButton(Button::Left, true)).unwrap(),
             RI_MOUSE_LEFT_BUTTON_UP => tx.send(Event::MouseButton(Button::Left, false)).unwrap(),
@@ -214,9 +213,7 @@ fn message_loop(hwnd: HWND) {
 }
 
 pub fn run_hook(tx: UnboundedSender<Event>) {
-    unsafe {
-        RESULT_SENDER = Some(Mutex::new(tx));
-    }
+    *RESULT_SENDER.lock().unwrap() = Some(tx);
 
     std::thread::spawn(|| {
         let hwnd = create_window();
